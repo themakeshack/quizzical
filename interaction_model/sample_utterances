@@ -1,0 +1,73 @@
+SelectGameIntent {Game}
+SelectGameIntent select {Game}
+SelectGameIntent ok {Game}
+
+AnswerIntent the answer is {Answer}
+AnswerIntent my answer is {Answer}
+AnswerIntent is it {Answer}
+AnswerIntent {Answer} is my answer
+AnswerIntent my choice is {Answer}
+AnswerIntent the choice is {Answer}
+AnswerIntent {Answer} is my choice
+AnswerIntent choose {Answer}
+
+AnswerOnlyIntent {Answer}
+
+RepeatIntent again
+RepeatIntent repeat
+RepeatIntent repeat question
+RepeatIntent repeat the question
+RepeatIntent repeat choices
+RepeatIntent repeat the choices
+RepeatIntent say it again
+RepeatIntent say it one more time
+RepeatIntent can you repeat
+RepeatIntent can you repeat that again
+RepeatIntent can you repeat the question
+RepeatIntent can you repeat my choices
+RepeatIntent can you repeat the choices
+RepeatIntent can you say my choices again
+RepeatIntent can you say the choices again
+RepeatIntent can you say again
+RepeatIntent can you say that again
+RepeatIntent can you say the question again
+RepeatIntent what is the question
+RepeatIntent what are my choices
+
+AMAZON.StartOverIntent start game
+AMAZON.StartOverIntent new game
+AMAZON.StartOverIntent start
+AMAZON.StartOverIntent start new game
+AMAZON.StartOverIntent restart
+AMAZON.StartOverIntent reset
+AMAZON.StartOverIntent start again
+AMAZON.StartOverIntent game reset
+AMAZON.StartOverIntent start game over
+
+AMAZON.HelpIntent help
+AMAZON.HelpIntent I'm stuck
+AMAZON.HelpIntent help me
+AMAZON.HelpIntent need help
+AMAZON.HelpIntent I need help
+
+
+AMAZON.StopIntent end
+AMAZON.StopIntent end game
+AMAZON.StopIntent quit
+AMAZON.StopIntent quit game
+AMAZON.StopIntent finish
+AMAZON.StopIntent finish game
+AMAZON.StopIntent stop
+AMAZON.StopIntent stop game
+AMAZON.StopIntent bye
+AMAZON.StopIntent see you later
+AMAZON.StopIntent goodbye
+
+DontKnowIntent i don't know
+DontKnowIntent don't know
+DontKnowIntent skip
+DontKnowIntent i don't know that
+DontKnowIntent who knows
+DontKnowIntent i don't know this question
+DontKnowIntent i don't know that one
+DontKnowIntent dunno
