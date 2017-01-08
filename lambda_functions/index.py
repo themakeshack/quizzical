@@ -20,18 +20,36 @@ import random
 
 ### ---------- START Game specific data ----------
 # Get our speech output variables defined here
-welcomeMessage = "Welcome to Quizzical. A master quiz game. Say which game you want to play. continents or capitals. "
-rePromptWelcome = "Welcome to Quizzical"
+welcomeMessage = "Welcome to Quizzical. " \
+                 "You have several games to choose from. " \
+                 "Depending on your game choice, you can either choose from options, or give a one word answer. " \
+                 "You can move along in the game by saying, " \
+                 "repeat, to repeat a question, " \
+                 "skip, to skip a question, " \
+                 "hint, to get a hint, " \
+                 "eliminate, to remove a choice, " \
+                 "start over, to restart the game, " \
+                 "or, stop, to end the game. " \
+                 "If you didn't get all that, don't worry, you can always say, help. and I will assist you. " \
+                 "Now, say which game would you like to play. continents, or, capitals."
+rePromptWelcome = "Welcome to Quizzical, say the name of the game. "
 rePromptContinent = "Say the name of the continent"
 rePromptCapital = "Give me the number choice for the capital"
-rePromptGameSelection = "what is your selection"
+rePromptGameSelection = "what is your selection. "
 rePromptIDK = "what is your choice"
 rePrompt = "what is your choice"
 helpMessage = {
-    'starting': "Countries quizzical help. Simply say the name of the selection, continents or capitals. Or if you want to start over simply say, start over. To end the game say, stop",
-    'playing': "Countries Quiz help. You can say, repeat, to repeat a question, or you can say, stop, to quit the game or say, start over, to start over the game"
+    'starting': "Quizzical help. Simply say the name of the selection, continents or capitals. Or if you want to start over simply say, start over. To end the game say, stop",
+    'playing': "Quizzical help. You can say, " \
+               "repeat to repeat a question, " \
+               "skip, to skip a question, " \
+               "hint, to get a hint, " \
+               "eliminate, to remove a choice, " \
+               "start over, to restart the game, " \
+               "or, stop, to end the game."
+
 }
-endOfCategoryMessage = "Congratulations!, you have reached the end of this category, say, start over, to choose a new one."
+endOfCategoryMessage = "Congratulations!, you have reached the end of this category, say, start over, to choose a new one. "
 endMessage = "Thank you for playing quizzical, goodbye!"
 
 # Amazon applicationID
@@ -184,7 +202,7 @@ continents = {
     'marshall islands': 'oceania',
     'macedonia': 'europe',
     'mali': 'africa',
-    'myanmar [burma]': 'asia',
+    'myanmar': 'asia',
     'mongolia': 'asia',
     'macao': 'asia',
     'northern mariana islands': 'oceania',
@@ -324,12 +342,11 @@ capitals = {
     'brazil': 'brasília',
     'bahamas': 'nassau',
     'bhutan': 'thimphu',
-    'bouvet island': '',
     'botswana': 'gaborone',
     'belarus': 'minsk',
     'belize': 'belmopan',
     'canada': 'ottawa',
-    'cocos [keeling] islands': 'west island',
+    'cocos or keeling islands': 'west island',
     'democratic republic of the congo': 'kinshasa',
     'central african republic': 'bangui',
     'republic of the congo': 'brazzaville',
@@ -371,13 +388,13 @@ capitals = {
     'grenada': 'saint georges',
     'georgia': 'tbilisi',
     'french guiana': 'cayenne',
-    'guernsey': 'st peter port',
+    'guernsey': 'saint peter port',
     'ghana': 'accra',
     'gibraltar': 'gibraltar',
     'greenland': 'nuuk',
     'gambia': 'bathurst',
     'guinea': 'conakry',
-    'guadeloupe': 'basse-terre',
+    'guadeloupe': 'basse terre',
     'equatorial guinea': 'malabo',
     'greece': 'athens',
     'south georgia and the south sandwich islands': 'grytviken',
@@ -386,7 +403,6 @@ capitals = {
     'guinea-bissau': 'bissau',
     'guyana': 'georgetown',
     'hong kong': 'hong kong',
-    'heard island and mcdonald islands': '',
     'honduras': 'tegucigalpa',
     'croatia': 'zagreb',
     'haiti': 'port-au-prince',
@@ -396,7 +412,6 @@ capitals = {
     'israel': 'jerusalem',
     'isle of man': 'douglas',
     'india': 'new delhi',
-    'british indian ocean territory': '',
     'iraq': 'baghdad',
     'iran': 'tehran',
     'iceland': 'reykjavik',
@@ -573,7 +588,7 @@ gameData = {
             'questionPrefix': ' ',
             'questionSuffix': '. ',
             'choicesPrefix': ' ',
-            'choicesSuffix': '',
+            'choicesSuffix': ' ',
             'usedQuestions': [],
             'gameMode': 'realAnswer'
         },
@@ -602,21 +617,30 @@ answer = ""
 answerPosition = 0
 gameMode = ""  # it will be realanswer or answernumber
 context = "starting"
+choices = []
+questionKey = ""
 
-strikesMessage = {
-    1: 'You have one strike! ',
-    2: 'You have a second strike!, better watch out! ',
-    3: 'third strike!, you are out!'
-}
 strikes = 0
 strikesAllowed = 3
 skips = 0
-skipsAllowed = 1
+skipsAllowed = 2
 hints = 0
-hintsAllowed = 1
+hintsAllowed = 2
 eliminates = 0
-eliminatesAllowed = 1
+eliminatesAllowed = 2
 points = 0
+
+strikesMessage = {
+    1: 'You have one strike! ',
+    2: 'You have a second strike!, better watch out! '
+}
+
+hintsMessage = "I can give you a hint Here it is. "
+skipMessage = "No problems, skipping. "
+eliminateMessage = "I can eliminate one of your choices. "
+alreadySkipped = "Sorry, you have already used the " + str(skipsAllowed) + " skips you are allowed. "
+alreadyHinted = "Sorry, you have already used the " + str(hintsAllowed) + " hints you are allowed. "
+alreadyEliminated = "Sorry, you have already used the " + str(eliminatesAllowed) + " eliminations you are allowed. "
 
 gameContext = ['starting', 'playing', 'ending']
 
@@ -662,9 +686,10 @@ correctAnswerPrompts = [
 correctAudio = "https://s3.amazonaws.com/themakeshack/bell.mp3"
 fail1Audio = "https://s3.amazonaws.com/themakeshack/fail1.mp3"
 fail2Audio = "https://s3.amazonaws.com/themakeshack/fail2.mp3"
-strikesAudio = [ "", fail1Audio, fail2Audio ]
+strikesAudio = ["", fail1Audio, fail2Audio]
 gameoverAudio = "https://s3.amazonaws.com/themakeshack/gameover.mp3"
 questionAudio = "https://s3.amazonaws.com/themakeshack/question.mp3"
+
 
 ### ---------- END Variables used in the game ----------
 
@@ -674,7 +699,7 @@ def pick_qa(teamDictName):
     # print teamdict
     if teamDictName in gameData:
         teamdict = eval(teamDictName)
-        if ( len(gameData[teamDictName]['usedQuestions']) < len(teamdict)):
+        if (len(gameData[teamDictName]['usedQuestions']) < len(teamdict)):
             question = random.choice(teamdict.keys())
             while (question in gameData[teamDictName]['usedQuestions']):
                 question = random.choice(teamdict.keys())
@@ -689,9 +714,66 @@ def pick_qa(teamDictName):
             position = choices.index(answer)
             return (question, answer, position, choices)
         else:
-            return ("End of category", "answer", 0, ["answer", "answer", "answer", "answer"] )
+            return ("End of category", "answer", 0, ["answer", "answer", "answer", "answer"])
     else:
         return ("question", "answer", 0, ["answer", "answer", "answer", "answer"])
+
+
+def pick_hint(teamDictName, questionKey):
+    teamdict = eval(teamDictName)
+    # pick two other keys that have the same answer and return them
+    answer = teamdict[questionKey]
+    if len(teamdict) > 15:
+        hintstogive = 3
+    else:
+        hintstogive = 2
+
+    hintKeys = [questionKey]
+    while (len(hintKeys) <= hintstogive):
+        hintKey = random.choice(teamdict.keys())
+        if (hintKey != question) and (hintKey not in hintKeys) and (teamdict[hintKey] == answer):
+            hintKeys.append(hintKey)
+    return hintKeys
+
+
+def eliminate_choice(teamDictName, questionKey, choices):
+    teamdict = eval(teamDictName)
+    question = questionKey
+    answer = teamdict[questionKey]
+
+    numToWord = {
+        0: "one",
+        1: "two",
+        2: "three",
+        3: "four"
+    }
+    numEliminates = 0
+    # eliminate one choice from the choices list
+    for choice in choices:
+        if numEliminates < 1 and choice != teamdict[questionKey]:
+            choices.remove(choice)
+            numEliminates += 1
+
+    # Mix up the choices remaining
+    random.shuffle(choices)
+
+    # find the new position of the answer
+    position = choices.index(answer)
+
+    if gameData[teamDictName]["gameMode"] == "answerChoice":
+        choiceString = ""
+        for i in range(0, len(choices) - 1):
+            choiceString += numToWord[i] + "," + choices[i] + '. '
+        choiceString += "and " + numToWord[len(choices) - 1] + "," + choices[len(choices) - 1] + "."
+        speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
+        speech_choices = gameData[teamDictName]['choicesPrefix'] + choiceString + gameData[teamDictName][
+            'choicesSuffix']
+        speech_output = speech_question + speech_choices
+        return (speech_output, answer, str(position + 1), questionKey, choices)
+    elif gameData[teamDictName]["gameMode"] == "realAnswer":
+        speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
+        speech_output = speech_question
+        return (speech_output, answer, '0', questionKey, choices)
 
 
 def create_question(teamDictName):
@@ -700,11 +782,11 @@ def create_question(teamDictName):
     # Keep track of which random key:value pair we picked so we dont pick it again
     # Also keep track of how many key:value pais we picked out of the list so we know when we run out
     (question, answer, position, choices) = pick_qa(teamDictName)
-
+    questionKey = question
     if (question == "End of category"):
         speech_output = endOfCategoryMessage
         answer = ""
-        return(speech_output, answer, 0)
+        return (speech_output, answer, 0)
     # print "Question = " + question
     # print "Answer = " + answer
     # print "Position of answer in the list is = " + str(position)
@@ -724,11 +806,11 @@ def create_question(teamDictName):
         speech_choices = gameData[teamDictName]['choicesPrefix'] + choiceString + gameData[teamDictName][
             'choicesSuffix']
         speech_output = speech_question + speech_choices
-        return (speech_output, answer, str(position + 1))
+        return (speech_output, answer, str(position + 1), questionKey, choices)
     elif gameData[teamDictName]["gameMode"] == "realAnswer":
         speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
         speech_output = speech_question
-        return (speech_output, answer, '0')
+        return (speech_output, answer, '0', questionKey, choices)
 
 
 ### ---------- END Functions that control the game ----------
@@ -744,7 +826,7 @@ def lambda_handler(event, context):
 
     # Check to see if it is our application (skillID) that is sending this request, if not raise a ValueError
     if (event['session']['application']['applicationId'] != skillID):
-         raise ValueError("Invalid Application ID")
+        raise ValueError("Invalid Application ID")
 
     if event['session']['new']:
         on_session_started({'requestId': event['request']['requestId']},
@@ -766,9 +848,11 @@ def on_session_started(session_started_request, session):
 
 
 def on_launch(launch_request, session):
+    global strikes, skips, hints, eliminates, points
     """ Called when the user launches the skill without specifying what they
     want
     """
+    strikes = skips = hints = eliminates = points = 0
     return get_welcome_response()
 
 
@@ -786,6 +870,12 @@ def on_intent(intent_request, session):
         return get_select_game_response(intent_request)
     elif intent_name == "AnswerIntent" or intent_name == "AnswerOnlyIntent":
         return get_answer_response(intent_request)
+    elif intent_name == "SkipIntent":
+        return get_skip_response()
+    elif intent_name == "HintIntent":
+        return get_hint_response()
+    elif intent_name == "EliminateIntent":
+        return get_eliminate_response()
     elif intent_name == 'RepeatIntent':
         return get_repeat_response()
     elif intent_name == "DontKnowIntent":
@@ -801,11 +891,14 @@ def on_intent(intent_request, session):
 
 
 def on_session_ended(session_ended_request, session):
+    global strikes, skips, hints, eliminates, points
     """ Called when the user ends the session.
     Is not called when the skill returns should_end_session=true
     """
     print("on_session_ended requestId=" + session_ended_request['requestId'] +
           ", sessionId=" + session['sessionId'])
+
+    strikes = skips = hints = eliminates = points = 0
 
     # add cleanup logic here
 
@@ -818,6 +911,7 @@ def on_session_ended(session_ended_request, session):
 def get_welcome_response():
     """ Welcome the user and provide the initial response """
     global context
+
     session_attributes = {}
     card_title = "Quizzical Welcome"
     speech_output = welcomeMessage
@@ -825,7 +919,7 @@ def get_welcome_response():
     # that is not understood, they will be prompted again with the same text.
     reprompt_text = rePromptWelcome
     should_end_session = False
-    context = 'starting' # we will use this context string to find context sensitive help
+    context = 'starting'  # we will use this context string to find context sensitive help
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
 
@@ -835,7 +929,7 @@ def get_help_response():
     global context
     session_attributes = {}
     card_title = "Quizzical Help"
-    print (context)
+    print(context)
     speech_output = helpMessage[context]
     reprompt_text = rePrompt
     should_end_session = False
@@ -845,7 +939,7 @@ def get_help_response():
 
 def get_select_game_response(intent_request):
     """ Select the game type here """
-    global game, question, answer, answerPosition, context, strikes
+    global game, question, answer, answerPosition, context, strikes, questionKey, choices
     session_attributes = {}
     card_title = "Quizzical Game Select"
     selectedGame = intent_request["intent"]["slots"]["Game"]["value"]
@@ -857,8 +951,8 @@ def get_select_game_response(intent_request):
             game = gameSelections[key]['choices']['city']
 
     if game != "":
-        speech_output = "ok " + selectedGame + "! let's begin!  "
-        (question, answer, answerPosition) = create_question(game)
+        speech_output = "ok, " + selectedGame + "! let's begin!  "
+        (question, answer, answerPosition, questionKey, choices) = create_question(game)
         speech_output += question
         # Since this is the first time we are playing, we should give mire detailed instructions
         speech_output += gameData[game]["welcomeSuffix"]
@@ -873,7 +967,7 @@ def get_select_game_response(intent_request):
 
 
 def get_answer_response(intent_request):
-    global  question, answer, answerPosition, context, strikes, points
+    global question, answer, answerPosition, context, strikes, points, questionKey, choices
     session_attributes = {}
     card_title = "Quizzical Game Answer"
 
@@ -912,20 +1006,101 @@ def get_answer_response(intent_request):
                 audiosrc = strikesAudio[strikes]
                 speech_output += strikesMessage[strikes]
 
-    (question, answer, answerPosition) = create_question(game)
+    (question, answer, answerPosition, questionKey, choices) = create_question(game)
     speech_output += question
     reprompt_text = question
     should_end_session = False
     context = 'playing'
 
     return build_response(session_attributes,
-                         build_ssml_response(card_title, speech_output, audiosrc, reprompt_text, should_end_session))
+                          build_ssml_response(card_title, speech_output, audiosrc, reprompt_text, should_end_session))
+
+
+def get_skip_response():
+    global gameData, game, question, answer, answerPosition, skips, questionKey, choices
+    session_attributes = {}
+    card_title = "Quizzical Skip"
+    skips += 1
+    if skips <= skipsAllowed:
+
+        if gameData[game]["gameMode"] == "answerChoice":
+            speech_output = "Skipping this question. For future use, the right answer was," + answerPosition + " ,which was," + answer + ". Moving on to the next question, "
+        elif gameData[game]["gameMode"] == "realAnswer":
+            speech_output = "Skipping this question. For future use, the right answer was," + answer + ". Moving on to the next question, "
+        (question, answer, answerPosition, questionKey, choices) = create_question(game)
+        speech_output += question
+    else:
+        speech_output = "Sorry you dont have any skips left. "
+        if gameData[game]["gameMode"] == "answerChoice":
+            if eliminates < eliminatesAllowed:
+                speech_output += "You could say, eliminate, to reduce your choices if you want. "
+        elif gameData[game]["gameMode"] == "realAnswer":
+            if hints < hintsAllowed:
+                speech_output += "You could ask for hint by saying, hint, if you would like. "
+
+        speech_output += "Again, the question is, " + question
+    reprompt_text = question
+    should_end_session = False
+    return build_response(session_attributes,
+                          build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
+
+
+def get_hint_response():
+    global gameData, game, question, answer, answerPosition, hints, questionKey, choices
+    session_attributes = {}
+    card_title = "Quizzical Hint"
+
+    hints += 1
+    if hints <= hintsAllowed:
+
+        if gameData[game]["gameMode"] == "answerChoice":
+            speech_output = "Sorry I dont have a hint to give you, but you can say, eliminate, to eliminate a choice. "
+        elif gameData[game]["gameMode"] == "realAnswer":
+            speech_output = "Ok, here is a hint. "
+            hintKeys = pick_hint(game, questionKey)
+            for hint in range(0, len(hintKeys) - 2):
+                speech_output += hintKeys[hint] + ", "
+            speech_output += "and " + hintKeys[len(hintKeys) - 1] + ", "
+            speech_output += "all have the same answer. what is yours? "
+    else:
+        speech_output = "Sorry, you dont have any hints left. "
+        speech_output += "Again, the question is, " + question
+
+    reprompt_text = question
+    should_end_session = False
+    return build_response(session_attributes,
+                          build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
+
+
+def get_eliminate_response():
+    global gameData, game, question, answer, answerPosition, hints, questionKey, choices, eliminates
+    session_attributes = {}
+    card_title = "Quizzical Eliminate"
+
+    eliminates += 1
+    if eliminates <= eliminatesAllowed:
+
+        if gameData[game]["gameMode"] == "answerChoice":
+            speech_output = "ok, let me eliminate a choice for you. "
+            (question, answer, answerPosition, questionKey, choices) = eliminate_choice(game, questionKey, choices)
+            speech_output += question
+
+        elif gameData[game]["gameMode"] == "realAnswer":
+            return get_hint_response()
+    else:
+        speech_output = "Sorry, you dont have any eliminates left. "
+        speech_output += "Again, the question is, " + question
+
+    reprompt_text = question
+    should_end_session = False
+    return build_response(session_attributes,
+                          build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
 
 def get_dont_know_response():
     global gameData, game, question, answer, answerPosition
     session_attributes = {}
-    card_title = "Quizzical Dont Know"
+    card_title = "Quizzical Don't Know"
 
     if context == 'starting':
         return get_help_response()
@@ -934,7 +1109,7 @@ def get_dont_know_response():
         speech_output = "That is ok. The right answer was," + answerPosition + " ,which was," + answer + ". Better luck with the next question, "
     elif gameData[game]["gameMode"] == "realAnswer":
         speech_output = "That is ok. The right answer was," + answer + ". Better luck with the next question, "
-    (question, answer, answerPosition) = create_question(game)
+    (question, answer, answerPosition, questionKey, choices) = create_question(game)
     speech_output += question
     reprompt_text = question
     should_end_session = False
@@ -954,6 +1129,7 @@ def get_repeat_response():
 
 
 def get_start_over_response():
+    global context, points, strikes
     session_attributes = {}
     card_title = "Quizzical Restart Game"
     for key in gameData:
@@ -963,6 +1139,7 @@ def get_start_over_response():
     strikes = 0
     return get_welcome_response()
 
+
 def handle_session_end_request():
     card_title = "Quizzical Session Ended"
     speech_output = endMessage
@@ -970,6 +1147,7 @@ def handle_session_end_request():
     should_end_session = True
     return build_response({}, build_speechlet_response(
         card_title, speech_output, None, should_end_session))
+
 
 def game_over():
     session_attributes = {}
@@ -980,13 +1158,15 @@ def game_over():
     should_end_session = True
     audiosrc = gameoverAudio
 
-    #return build_response({}, build_speechlet_response(
+    # return build_response({}, build_speechlet_response(
     #    card_title, speech_output, None, should_end_session))
     return build_response(session_attributes,
-                         build_ssml_response(card_title, speech_output, audiosrc, None, should_end_session))
+                          build_ssml_response(card_title, speech_output, audiosrc, None, should_end_session))
+
 
 # --------------- Helpers that build all of the responses ----------------------
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
+
     return {
         'outputSpeech': {
             'type': 'PlainText',
@@ -994,7 +1174,7 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session):
         },
         'card': {
             'type': 'Simple',
-            'title':  title,
+            'title': title,
             'content': output
         },
         'reprompt': {
@@ -1034,4 +1214,3 @@ def build_ssml_response(title, output, audiosrc, reprompt_text, should_end_sessi
         },
         'shouldEndSession': should_end_session
     }
-
