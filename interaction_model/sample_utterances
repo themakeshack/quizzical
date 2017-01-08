@@ -13,6 +13,53 @@ AnswerIntent choose {Answer}
 
 AnswerOnlyIntent {Answer}
 
+SkipIntent skip
+SkipIntent skip please
+SkipIntent skip this
+SkipIntent skip this question
+SkipIntent can you skip this question
+SkipIntent I want to skip
+SkipIntent I want to skip this
+SkipIntent can i skip
+SkipIntent skipping
+SkipIntent skipping this
+SkipIntent i am skipping
+SkipIntent i would like to skip
+SkipIntent i am passing
+SkipIntent pass
+SkipIntent pass please
+SkipIntent pass this
+SkipIntent pass this question
+SkipIntent can you pass this question
+SkipIntent I want to pass
+SkipIntent I want to pass this
+SkipIntent can i pass
+SkipIntent passing
+SkipIntent passing this
+SkipIntent i am passing
+SkipIntent i would like to pass
+
+HintIntent hint
+HintIntent give me a hint
+HintIntent can you give a hint
+HintIntent can you give me a hint
+HintIntent can i have a hint
+HintIntent hint please
+HintIntent i need a hint
+HintIntent i need hint
+HintIntent hints
+HintIntent need hint
+HintIntent need hints
+HintIntent i need hints
+HintIntent need a hint
+
+EliminateIntent take away a choice
+EliminateIntent reduce choice
+EliminateIntent eliminate choice
+EliminateIntent eliminate a choice
+EliminateIntent reduce a choice
+EliminateIntent eliminate
+
 RepeatIntent again
 RepeatIntent repeat
 RepeatIntent repeat question
@@ -65,7 +112,6 @@ AMAZON.StopIntent goodbye
 
 DontKnowIntent i don't know
 DontKnowIntent don't know
-DontKnowIntent skip
 DontKnowIntent i don't know that
 DontKnowIntent who knows
 DontKnowIntent i don't know this question

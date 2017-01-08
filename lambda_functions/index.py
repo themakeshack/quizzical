@@ -20,7 +20,7 @@ import random
 
 ### ---------- START Game specific data ----------
 # Get our speech output variables defined here
-welcomeMessage = "Welcome to Quizzical. A master quiz game. Say which game you want to play continents or capitals. "
+welcomeMessage = "Welcome to Quizzical. A master quiz game. Say which game you want to play. continents or capitals. "
 rePromptWelcome = "Welcome to Quizzical"
 rePromptContinent = "Say the name of the continent"
 rePromptCapital = "Give me the number choice for the capital"
@@ -32,11 +32,7 @@ helpMessage = {
     'playing': "Countries Quiz help. You can say, repeat, to repeat a question, or you can say, stop, to quit the game or say, start over, to start over the game"
 }
 endOfCategoryMessage = "Congratulations!, you have reached the end of this category, say, start over, to choose a new one."
-endMessage = "Thank you for playing countries quizzical, goodbye!"
-
-correctAudio = "https://s3.amazonaws.com/themakeshack/bell.mp3"
-failAudio = "https://s3.amazonaws.com/themakeshack/fail.mp3"
-questionAudio = "https://s3.amazonaws.com/themakeshack/question.mp3"
+endMessage = "Thank you for playing quizzical, goodbye!"
 
 # Amazon applicationID
 skillID = "amzn1.ask.skill.e86383ae-412c-4678-9a8d-dbbba92a3ced"
@@ -607,6 +603,21 @@ answerPosition = 0
 gameMode = ""  # it will be realanswer or answernumber
 context = "starting"
 
+strikesMessage = {
+    1: 'You have one strike! ',
+    2: 'You have a second strike!, better watch out! ',
+    3: 'third strike!, you are out!'
+}
+strikes = 0
+strikesAllowed = 3
+skips = 0
+skipsAllowed = 1
+hints = 0
+hintsAllowed = 1
+eliminates = 0
+eliminatesAllowed = 1
+points = 0
+
 gameContext = ['starting', 'playing', 'ending']
 
 correctAnswerPrompts = [
@@ -647,6 +658,13 @@ correctAnswerPrompts = [
     "dynamite",
     "incredible!"
 ]
+
+correctAudio = "https://s3.amazonaws.com/themakeshack/bell.mp3"
+fail1Audio = "https://s3.amazonaws.com/themakeshack/fail1.mp3"
+fail2Audio = "https://s3.amazonaws.com/themakeshack/fail2.mp3"
+strikesAudio = [ "", fail1Audio, fail2Audio ]
+gameoverAudio = "https://s3.amazonaws.com/themakeshack/gameover.mp3"
+questionAudio = "https://s3.amazonaws.com/themakeshack/question.mp3"
 
 ### ---------- END Variables used in the game ----------
 
@@ -751,7 +769,6 @@ def on_launch(launch_request, session):
     """ Called when the user launches the skill without specifying what they
     want
     """
-
     return get_welcome_response()
 
 
@@ -802,7 +819,7 @@ def get_welcome_response():
     """ Welcome the user and provide the initial response """
     global context
     session_attributes = {}
-    card_title = "Teams Quiz Welcome"
+    card_title = "Quizzical Welcome"
     speech_output = welcomeMessage
     # If the user either does not reply to the welcome message or says something
     # that is not understood, they will be prompted again with the same text.
@@ -817,7 +834,7 @@ def get_help_response():
     """ Get help response - this should be context sensitive depending on whether the user is just starting or if they are already playing"""
     global context
     session_attributes = {}
-    card_title = "Teams Quiz Help"
+    card_title = "Quizzical Help"
     print (context)
     speech_output = helpMessage[context]
     reprompt_text = rePrompt
@@ -828,9 +845,9 @@ def get_help_response():
 
 def get_select_game_response(intent_request):
     """ Select the game type here """
-    global game, question, answer, answerPosition, context
+    global game, question, answer, answerPosition, context, strikes
     session_attributes = {}
-    card_title = "Teams Quiz Game Select"
+    card_title = "Quizzical Game Select"
     selectedGame = intent_request["intent"]["slots"]["Game"]["value"]
 
     # Select the name of the "game" that we will use throughout the game
@@ -856,9 +873,9 @@ def get_select_game_response(intent_request):
 
 
 def get_answer_response(intent_request):
-    global game, question, answer, answerPosition, context
+    global  question, answer, answerPosition, context, strikes, points
     session_attributes = {}
-    card_title = "Teams Quiz Game Answer"
+    card_title = "Quizzical Game Answer"
 
     # The AnswerIntent returns a Answer object with no "value" set if the answer was not in the slots
     # We need to check that to create an incorrect answer if we dont get any "value"
@@ -871,24 +888,35 @@ def get_answer_response(intent_request):
         if (playerAnswer == answerPosition):
             speech_output = random.choice(correctAnswerPrompts) + ". "
             audiosrc = correctAudio
+            points += 1
         else:
             speech_output = "Incorrect. The right answer was," + str(answerPosition) + " ,which was," + answer + ". "
-            audiosrc = failAudio
+            strikes += 1
+            if (strikes >= strikesAllowed):
+                return game_over()
+            else:
+                audiosrc = strikesAudio[strikes]
+                speech_output += strikesMessage[strikes]
+
     elif gameData[game]["gameMode"] == "realAnswer":
         if (playerAnswer.lower() == answer.lower()):
             speech_output = random.choice(correctAnswerPrompts) + ". "
             audiosrc = correctAudio
+            points += 1
         else:
             speech_output = "Incorrect. The right answer was," + answer + ". "
-            audiosrc = failAudio
+            strikes += 1
+            if (strikes >= strikesAllowed):
+                return game_over()
+            else:
+                audiosrc = strikesAudio[strikes]
+                speech_output += strikesMessage[strikes]
 
     (question, answer, answerPosition) = create_question(game)
     speech_output += question
     reprompt_text = question
     should_end_session = False
     context = 'playing'
-    #return build_response(session_attributes,
-                          #build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
     return build_response(session_attributes,
                          build_ssml_response(card_title, speech_output, audiosrc, reprompt_text, should_end_session))
@@ -897,7 +925,7 @@ def get_answer_response(intent_request):
 def get_dont_know_response():
     global gameData, game, question, answer, answerPosition
     session_attributes = {}
-    card_title = "Teams Quiz Dont Know"
+    card_title = "Quizzical Dont Know"
 
     if context == 'starting':
         return get_help_response()
@@ -917,7 +945,7 @@ def get_dont_know_response():
 def get_repeat_response():
     global game, question, answer, answerPosition
     session_attributes = {}
-    card_title = "Countries Quiz Repeat"
+    card_title = "Quizzical Repeat"
     speech_output = "ok, again. " + question
     reprompt_text = question
     should_end_session = False
@@ -927,21 +955,35 @@ def get_repeat_response():
 
 def get_start_over_response():
     session_attributes = {}
-    card_title = "Teams Quiz Restart Game"
+    card_title = "Quizzical Restart Game"
     for key in gameData:
         gameData[key]['usedQuestions'] = []
     context = 'starting'
+    points = 0
+    strikes = 0
     return get_welcome_response()
 
-
 def handle_session_end_request():
-    card_title = "Teams Quiz Session Ended"
+    card_title = "Quizzical Session Ended"
     speech_output = endMessage
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
     return build_response({}, build_speechlet_response(
         card_title, speech_output, None, should_end_session))
 
+def game_over():
+    session_attributes = {}
+    card_title = "Quizzical Game Over"
+    speech_output = "You got " + str(points) + " points. "
+    speech_output += "Good effort, but you can only have " + str(strikesAllowed) + " strikes and you are out. "
+    speech_output += "Thanks for playing Quizzical and hope to see you again soon"
+    should_end_session = True
+    audiosrc = gameoverAudio
+
+    #return build_response({}, build_speechlet_response(
+    #    card_title, speech_output, None, should_end_session))
+    return build_response(session_attributes,
+                         build_ssml_response(card_title, speech_output, audiosrc, None, should_end_session))
 
 # --------------- Helpers that build all of the responses ----------------------
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
