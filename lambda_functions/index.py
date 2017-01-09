@@ -1,26 +1,16 @@
 # coding=utf-8
 
 """
-This code sample is a part of a simple demo to show beginners how to create a skill (app) for the Amazon Echo using AWS Lambda and the Alexa Skills Kit.
-
-For the full code sample visit https://github.com/pmckinney8/Alexa_Dojo_Skill.git
-
-
-TO-DO
-1) Change the code such that the program runs like a multichoice quizzical
-2) Initially focus on NFL cities and teams
-3) Expand into player stats
-4) Expand into other sports
-5) Implement a peristent point heme based on user data
-
+Quizzical - An Alexa Skill
+Code is based on original code from https://github.com/pmckinney8/Alexa_Dojo_Skill.git
 """
 from __future__ import print_function
-
 import random
 
 ### ---------- START Game specific data ----------
 # Get our speech output variables defined here
-welcomeMessage = "Welcome to Quizzical. " \
+welcomeMessage = "Welcome to Quizzical. say which game would you like to play. continents, or, capitals."
+'''
                  "You have several games to choose from. " \
                  "Depending on your game choice, you can either choose from options, or give a one word answer. " \
                  "You can move along in the game by saying, " \
@@ -30,8 +20,10 @@ welcomeMessage = "Welcome to Quizzical. " \
                  "eliminate, to remove a choice, " \
                  "start over, to restart the game, " \
                  "or, stop, to end the game. " \
-                 "If you didn't get all that, don't worry, you can always say, help. and I will assist you. " \
-                 "Now, say which game would you like to play. continents, or, capitals."
+                 "If you didn't get all that, don't worry, you can always say, help. and I will assist you. "
+'''
+
+
 rePromptWelcome = "Welcome to Quizzical, say the name of the game. "
 rePromptContinent = "Say the name of the continent"
 rePromptCapital = "Give me the number choice for the capital"
@@ -39,17 +31,19 @@ rePromptGameSelection = "what is your selection. "
 rePromptIDK = "what is your choice"
 rePrompt = "what is your choice"
 helpMessage = {
-    'starting': "Quizzical help. Simply say the name of the selection, continents or capitals. Or if you want to start over simply say, start over. To end the game say, stop",
-    'playing': "Quizzical help. You can say, " \
-               "repeat to repeat a question, " \
-               "skip, to skip a question, " \
-               "hint, to get a hint, " \
-               "eliminate, to remove a choice, " \
-               "start over, to restart the game, " \
+    'starting': "Quizzical help. Simply say the name of the selection, continents or capitals. "
+                "Or if you want to start over simply say, start over. To end the game say, stop",
+    'playing': "Quizzical help. You can say, "
+               "repeat to repeat a question, "
+               "skip, to skip a question, "
+               "hint, to get a hint, "
+               "eliminate, to remove a choice, "
+               "start over, to restart the game, "
                "or, stop, to end the game."
 
 }
-endOfCategoryMessage = "Congratulations!, you have reached the end of this category, say, start over, to choose a new one. "
+endOfCategoryMessage = "Congratulations!, you have reached the end of this category, " \
+                       "say, start over, to choose a new one. "
 endMessage = "Thank you for playing quizzical, goodbye!"
 
 # Amazon applicationID
@@ -564,7 +558,7 @@ gameSelections = {
             'choices':
                 {
                     'city': 'continents'
-                    # TODO: The 'city' keyword is a remnant that needs to be changed to comething meaningful
+                    # TODO: The 'city' keyword is a remnant that needs to be changed to something meaningful
                 }
         },
 
@@ -574,13 +568,13 @@ gameSelections = {
             'choices':
                 {
                     'city': 'capitals'
-                    # TODO: The 'city' keyword is a remnant that needs to be changed to comething meaningful
+                    # TODO: The 'city' keyword is a remnant that needs to be changed to something meaningful
                 }
         }
 }
 
 # dict that stores the soeech responses for each game and tracks the questions
-gameData = {
+gameMetaData = {
 
     'continents':
         {
@@ -605,45 +599,27 @@ gameData = {
         },
 }
 
-# Initialize a game - this is useful for testing if the game selection has not been done by the user
-game = "continents"
 ### ---------- END Game specific data ----------
 
 
 ### ---------- START Variables used in the game ----------
 # Initialize variables
-question = ""
-answer = ""
-answerPosition = 0
-gameMode = ""  # it will be realanswer or answernumber
+gameMode = ""
 context = "starting"
-choices = []
-questionKey = ""
-
-strikes = 0
 strikesAllowed = 3
-skips = 0
 skipsAllowed = 2
-hints = 0
 hintsAllowed = 2
-eliminates = 0
 eliminatesAllowed = 2
-points = 0
 
 strikesMessage = {
     1: 'You have one strike! ',
     2: 'You have a second strike!, better watch out! '
 }
 
-hintsMessage = "I can give you a hint Here it is. "
-skipMessage = "No problems, skipping. "
-eliminateMessage = "I can eliminate one of your choices. "
-alreadySkipped = "Sorry, you have already used the " + str(skipsAllowed) + " skips you are allowed. "
-alreadyHinted = "Sorry, you have already used the " + str(hintsAllowed) + " hints you are allowed. "
-alreadyEliminated = "Sorry, you have already used the " + str(eliminatesAllowed) + " eliminations you are allowed. "
 
 gameContext = ['starting', 'playing', 'ending']
 
+# Prompts that are used at random for correct answers
 correctAnswerPrompts = [
     'you got! it ',
     'nice! ',
@@ -690,128 +666,112 @@ strikesAudio = ["", fail1Audio, fail2Audio]
 gameoverAudio = "https://s3.amazonaws.com/themakeshack/gameover.mp3"
 questionAudio = "https://s3.amazonaws.com/themakeshack/question.mp3"
 
-
+# A dict to translate the list index position to spoken word
+numToWord = {
+    0: "one",
+    1: "two",
+    2: "three",
+    3: "four"
+}
 ### ---------- END Variables used in the game ----------
 
 ### ---------- START Functions that control the game ----------
-def pick_qa(teamDictName):
-    # this function picks the random key:value pair and returns key:value and three other random values from the dictionary
-    # print teamdict
-    if teamDictName in gameData:
-        teamdict = eval(teamDictName)
-        if (len(gameData[teamDictName]['usedQuestions']) < len(teamdict)):
-            question = random.choice(teamdict.keys())
-            while (question in gameData[teamDictName]['usedQuestions']):
-                question = random.choice(teamdict.keys())
-            gameData[teamDictName]['usedQuestions'].append(question)
-            answer = teamdict[question]
-            choices = [answer]
-            while (len(choices) < 4):
-                otherKey = random.choice(teamdict.keys())
-                if (otherKey != question and (teamdict[otherKey] not in choices)):
-                    choices.append(teamdict[otherKey])
-            random.shuffle(choices)
-            position = choices.index(answer)
-            return (question, answer, position, choices)
+class Game():
+    def __init__(self, gamename):
+        if gamename in gameMetaData:
+            self.data = eval(gamename)
+            self.metadata = gameMetaData[gamename]
+            self.strikes = 0
+            self.skips = 0
+            self.eliminates = 0
+            self.points = 0
+            self.hints = 0
+            self.choices = []
+            self.position = 0
+            self.answer = ""
+            self.question = ""
+            self.spokenQuestion = ""
+            self.hintKeys = []
+            self.pick_qa()
+            self.make_spoken_qa()
+        pass
+
+    def pick_qa(self, numChoices=4):
+        # this function picks the random key:value pair and returns key:value and three other random values
+        # print teamdict
+        if (len(self.metadata['usedQuestions']) < len(self.data)):
+            self.question = random.choice(self.data.keys())
+            while (self.question in self.metadata['usedQuestions']):
+                self.question = random.choice(self.data.keys())
+            self.metadata['usedQuestions'].append(self.question)
+            self.answer = self.data[self.question]
+            self.choices = [self.answer]
+            while (len(self.choices) < numChoices):
+                otherKey = random.choice(self.data.keys())
+                if (otherKey != self.question and (self.data[otherKey] not in self.choices)):
+                    self.choices.append(self.data[otherKey])
+            random.shuffle(self.choices)
+            self.position = self.choices.index(self.answer) + 1
         else:
-            return ("End of category", "answer", 0, ["answer", "answer", "answer", "answer"])
-    else:
-        return ("question", "answer", 0, ["answer", "answer", "answer", "answer"])
+            self.question = "End of category"
 
+    def make_spoken_qa(self):
+        # this the function that creates a question. It returns a speech output string and an answer string as a list
+        # Call item picker to get a random key:value pair out of our dict and three other random values that re not the same as our key:value
+        # Keep track of which random key:value pair we picked so we don't pick it again
+        # Also keep track of how many key:value pairs we picked out of the list so we know when we run out
 
-def pick_hint(teamDictName, questionKey):
-    teamdict = eval(teamDictName)
-    # pick two other keys that have the same answer and return them
-    answer = teamdict[questionKey]
-    if len(teamdict) > 15:
-        hintstogive = 3
-    else:
-        hintstogive = 2
+        if (self.question == "End of category"):
+            self.speech_output = endOfCategoryMessage
+            self.answer = ""
+            self.position = 0
 
-    hintKeys = [questionKey]
-    while (len(hintKeys) <= hintstogive):
-        hintKey = random.choice(teamdict.keys())
-        if (hintKey != question) and (hintKey not in hintKeys) and (teamdict[hintKey] == answer):
-            hintKeys.append(hintKey)
-    return hintKeys
+        if self.metadata["gameMode"] == "answerChoice":
+            choiceString = ""
+            for i in range(0, len(self.choices) - 1):
+                choiceString += numToWord[i] + "," + self.choices[i] + '. '
+            choiceString += "and " + numToWord[len(self.choices) - 1] + "," + self.choices[len(self.choices) - 1] + "."
+            speech_question = self.metadata['questionPrefix'] + self.question + self.metadata['questionSuffix']
+            speech_choices = self.metadata['choicesPrefix'] + choiceString + self.metadata['choicesSuffix']
+            self.spokenQuestion = self.speech_output = speech_question + speech_choices
+        elif self.metadata["gameMode"] == "realAnswer":
+            speech_question = self.metadata['questionPrefix'] + self.question + self.metadata['questionSuffix']
+            self.spokenQuestion = self.speech_output = speech_question
 
+    def create_qa(self):
+        self.pick_qa()
+        self.make_spoken_qa()
 
-def eliminate_choice(teamDictName, questionKey, choices):
-    teamdict = eval(teamDictName)
-    question = questionKey
-    answer = teamdict[questionKey]
+    def pick_hints(self):
+        # pick two other keys that have the same answer and return them
+        if len(self.data) > 15:
+            hintstogive = 3
+        else:
+            hintstogive = 2
+        # setup a list of all hints - this will also reset if there are previous hints
+        self.hintKeys = [self.question]
+        while (len(self.hintKeys) <= hintstogive):
+            hintKey = random.choice(self.data.keys())
+            if (hintKey != self.question) and (hintKey not in self.hintKeys) and (self.data[hintKey] == self.answer):
+                self.hintKeys.append(hintKey)
 
-    numToWord = {
-        0: "one",
-        1: "two",
-        2: "three",
-        3: "four"
-    }
-    numEliminates = 0
-    # eliminate one choice from the choices list
-    for choice in choices:
-        if numEliminates < 1 and choice != teamdict[questionKey]:
-            choices.remove(choice)
-            numEliminates += 1
+    def reduce_choices(self):
+        numEliminates = 0
 
-    # Mix up the choices remaining
-    random.shuffle(choices)
+        # eliminate one choice from the choices list
+        for choice in self.choices:
+            if numEliminates < 1 and choice != self.data[self.question]:
+                self.choices.remove(choice)
+                numEliminates += 1
+        # Mix up the choices remaining
+        random.shuffle(self.choices)
+        # find the new position of the answer
+        self.position = self.choices.index(self.answer) + 1
+        # Reconstruct the spoken question
+        self.make_spoken_qa()
 
-    # find the new position of the answer
-    position = choices.index(answer)
-
-    if gameData[teamDictName]["gameMode"] == "answerChoice":
-        choiceString = ""
-        for i in range(0, len(choices) - 1):
-            choiceString += numToWord[i] + "," + choices[i] + '. '
-        choiceString += "and " + numToWord[len(choices) - 1] + "," + choices[len(choices) - 1] + "."
-        speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
-        speech_choices = gameData[teamDictName]['choicesPrefix'] + choiceString + gameData[teamDictName][
-            'choicesSuffix']
-        speech_output = speech_question + speech_choices
-        return (speech_output, answer, str(position + 1), questionKey, choices)
-    elif gameData[teamDictName]["gameMode"] == "realAnswer":
-        speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
-        speech_output = speech_question
-        return (speech_output, answer, '0', questionKey, choices)
-
-
-def create_question(teamDictName):
-    # this the function that creates a question. It returns a speech output string and an answer string as a list
-    # Call item picker to get a random key:value pair out of our dict and three other random values that re not the same as our key:value
-    # Keep track of which random key:value pair we picked so we dont pick it again
-    # Also keep track of how many key:value pais we picked out of the list so we know when we run out
-    (question, answer, position, choices) = pick_qa(teamDictName)
-    questionKey = question
-    if (question == "End of category"):
-        speech_output = endOfCategoryMessage
-        answer = ""
-        return (speech_output, answer, 0)
-    # print "Question = " + question
-    # print "Answer = " + answer
-    # print "Position of answer in the list is = " + str(position)
-    # print "Choices: ", choices
-    numToWord = {
-        0: "one",
-        1: "two",
-        2: "three",
-        3: "four"
-    }
-    if gameData[teamDictName]["gameMode"] == "answerChoice":
-        choiceString = ""
-        for i in range(0, len(choices) - 1):
-            choiceString += numToWord[i] + "," + choices[i] + '. '
-        choiceString += "and " + numToWord[len(choices) - 1] + "," + choices[len(choices) - 1] + "."
-        speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
-        speech_choices = gameData[teamDictName]['choicesPrefix'] + choiceString + gameData[teamDictName][
-            'choicesSuffix']
-        speech_output = speech_question + speech_choices
-        return (speech_output, answer, str(position + 1), questionKey, choices)
-    elif gameData[teamDictName]["gameMode"] == "realAnswer":
-        speech_question = gameData[teamDictName]['questionPrefix'] + question + gameData[teamDictName]['questionSuffix']
-        speech_output = speech_question
-        return (speech_output, answer, '0', questionKey, choices)
-
+# Initialize a dummy game - this is useful for testing if the game selection has not been done by the user
+#gameObject = Game('continents')
 
 ### ---------- END Functions that control the game ----------
 
@@ -848,11 +808,10 @@ def on_session_started(session_started_request, session):
 
 
 def on_launch(launch_request, session):
-    global strikes, skips, hints, eliminates, points
+    global gameObject
     """ Called when the user launches the skill without specifying what they
     want
     """
-    strikes = skips = hints = eliminates = points = 0
     return get_welcome_response()
 
 
@@ -891,14 +850,12 @@ def on_intent(intent_request, session):
 
 
 def on_session_ended(session_ended_request, session):
-    global strikes, skips, hints, eliminates, points
+    global gameObject
     """ Called when the user ends the session.
     Is not called when the skill returns should_end_session=true
     """
     print("on_session_ended requestId=" + session_ended_request['requestId'] +
           ", sessionId=" + session['sessionId'])
-
-    strikes = skips = hints = eliminates = points = 0
 
     # add cleanup logic here
 
@@ -939,7 +896,7 @@ def get_help_response():
 
 def get_select_game_response(intent_request):
     """ Select the game type here """
-    global game, question, answer, answerPosition, context, strikes, questionKey, choices
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Game Select"
     selectedGame = intent_request["intent"]["slots"]["Game"]["value"]
@@ -949,13 +906,14 @@ def get_select_game_response(intent_request):
         if selectedGame in gameSelections[key]['aliases']:
             # TODO: rather than fixing this as city or team, make the next level selection of sub game choices
             game = gameSelections[key]['choices']['city']
+            gameObject = Game(gameSelections[key]['choices']['city'])
 
     if game != "":
         speech_output = "ok, " + selectedGame + "! let's begin!  "
-        (question, answer, answerPosition, questionKey, choices) = create_question(game)
-        speech_output += question
-        # Since this is the first time we are playing, we should give mire detailed instructions
-        speech_output += gameData[game]["welcomeSuffix"]
+        gameObject.create_qa()
+        speech_output += gameObject.spokenQuestion
+        # Since this is the first time we are playing, we should give more detailed instructions
+        speech_output += gameObject.metadata["welcomeSuffix"]
     else:
         speech_output = rePromptGameSelection
 
@@ -967,7 +925,7 @@ def get_select_game_response(intent_request):
 
 
 def get_answer_response(intent_request):
-    global question, answer, answerPosition, context, strikes, points, questionKey, choices
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Game Answer"
 
@@ -978,37 +936,38 @@ def get_answer_response(intent_request):
     else:
         playerAnswer = "Incorrect"
 
-    if gameData[game]["gameMode"] == "answerChoice":
-        if (playerAnswer == answerPosition):
+    if gameObject.metadata["gameMode"] == "answerChoice":
+        if (playerAnswer == str(gameObject.position)):
             speech_output = random.choice(correctAnswerPrompts) + ". "
             audiosrc = correctAudio
-            points += 1
+            gameObject.points += 1
         else:
-            speech_output = "Incorrect. The right answer was," + str(answerPosition) + " ,which was," + answer + ". "
-            strikes += 1
-            if (strikes >= strikesAllowed):
+            speech_output = "Incorrect. The right answer was," + str(gameObject.position) + \
+                            " ,which was," + gameObject.answer + ". "
+            gameObject.strikes += 1
+            if (gameObject.strikes >= strikesAllowed):
                 return game_over()
             else:
-                audiosrc = strikesAudio[strikes]
-                speech_output += strikesMessage[strikes]
+                audiosrc = strikesAudio[gameObject.strikes]
+                speech_output += strikesMessage[gameObject.strikes]
 
-    elif gameData[game]["gameMode"] == "realAnswer":
-        if (playerAnswer.lower() == answer.lower()):
+    elif gameObject.metadata["gameMode"] == "realAnswer":
+        if (playerAnswer.lower() == gameObject.answer.lower()):
             speech_output = random.choice(correctAnswerPrompts) + ". "
             audiosrc = correctAudio
-            points += 1
+            gameObject.points += 1
         else:
-            speech_output = "Incorrect. The right answer was," + answer + ". "
-            strikes += 1
-            if (strikes >= strikesAllowed):
+            speech_output = "Incorrect. The right answer was," + gameObject.answer + ". "
+            gameObject.strikes += 1
+            if (gameObject.strikes >= strikesAllowed):
                 return game_over()
             else:
-                audiosrc = strikesAudio[strikes]
-                speech_output += strikesMessage[strikes]
+                audiosrc = strikesAudio[gameObject.strikes]
+                speech_output += strikesMessage[gameObject.strikes]
 
-    (question, answer, answerPosition, questionKey, choices) = create_question(game)
-    speech_output += question
-    reprompt_text = question
+    gameObject.create_qa()
+    speech_output += gameObject.spokenQuestion
+    reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     context = 'playing'
 
@@ -1017,126 +976,128 @@ def get_answer_response(intent_request):
 
 
 def get_skip_response():
-    global gameData, game, question, answer, answerPosition, skips, questionKey, choices
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Skip"
-    skips += 1
-    if skips <= skipsAllowed:
+    gameObject.skips += 1
+    if gameObject.skips <= skipsAllowed:
 
-        if gameData[game]["gameMode"] == "answerChoice":
-            speech_output = "Skipping this question. For future use, the right answer was," + answerPosition + " ,which was," + answer + ". Moving on to the next question, "
-        elif gameData[game]["gameMode"] == "realAnswer":
-            speech_output = "Skipping this question. For future use, the right answer was," + answer + ". Moving on to the next question, "
-        (question, answer, answerPosition, questionKey, choices) = create_question(game)
-        speech_output += question
+        if gameObject.metadata["gameMode"] == "answerChoice":
+            speech_output = "Skipping this question. For future use, the right answer was," + \
+                            str(gameObject.position) + " ,which was," + gameObject.answer + \
+                            ". Moving on to the next question, "
+        elif gameObject.metadata["gameMode"] == "realAnswer":
+            speech_output = "Skipping this question. For future use, the right answer was," + \
+                            gameObject.answer + ". Moving on to the next question, "
+        gameObject.create_qa()
+        speech_output += gameObject.spokenQuestion
     else:
         speech_output = "Sorry you dont have any skips left. "
-        if gameData[game]["gameMode"] == "answerChoice":
-            if eliminates < eliminatesAllowed:
+        if gameObject.metadata["gameMode"] == "answerChoice":
+            if gameObject.eliminates < eliminatesAllowed:
                 speech_output += "You could say, eliminate, to reduce your choices if you want. "
-        elif gameData[game]["gameMode"] == "realAnswer":
-            if hints < hintsAllowed:
+        elif gameObject.metadata["gameMode"] == "realAnswer":
+            if gameObject.hints < hintsAllowed:
                 speech_output += "You could ask for hint by saying, hint, if you would like. "
 
-        speech_output += "Again, the question is, " + question
-    reprompt_text = question
+        speech_output += "Again, the question is, " + gameObject.spokenQuestion
+    reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
                           build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
 
 def get_hint_response():
-    global gameData, game, question, answer, answerPosition, hints, questionKey, choices
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Hint"
 
-    hints += 1
-    if hints <= hintsAllowed:
+    gameObject.hints += 1
+    if gameObject.hints <= hintsAllowed:
 
-        if gameData[game]["gameMode"] == "answerChoice":
+        if gameObject.metadata["gameMode"] == "answerChoice":
             speech_output = "Sorry I dont have a hint to give you, but you can say, eliminate, to eliminate a choice. "
-        elif gameData[game]["gameMode"] == "realAnswer":
+        elif gameObject.metadata["gameMode"] == "realAnswer":
             speech_output = "Ok, here is a hint. "
-            hintKeys = pick_hint(game, questionKey)
-            for hint in range(0, len(hintKeys) - 2):
-                speech_output += hintKeys[hint] + ", "
-            speech_output += "and " + hintKeys[len(hintKeys) - 1] + ", "
+            gameObject.pick_hints()
+            for hint in range(0, len(gameObject.hintKeys) - 2):
+                speech_output += gameObject.hintKeys[hint] + ", "
+            speech_output += "and " + gameObject.hintKeys[len(gameObject.hintKeys) - 1] + ", "
             speech_output += "all have the same answer. what is yours? "
     else:
-        speech_output = "Sorry, you dont have any hints left. "
-        speech_output += "Again, the question is, " + question
+        speech_output = "Sorry, you don't have any hints left. "
+        speech_output += "Again, the question is, " + gameObject.spokenQuestion
 
-    reprompt_text = question
+    reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
                           build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
 
 def get_eliminate_response():
-    global gameData, game, question, answer, answerPosition, hints, questionKey, choices, eliminates
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Eliminate"
 
-    eliminates += 1
-    if eliminates <= eliminatesAllowed:
-
-        if gameData[game]["gameMode"] == "answerChoice":
+    gameObject.eliminates += 1
+    if gameObject.eliminates <= eliminatesAllowed:
+        if gameObject.metadata["gameMode"] == "answerChoice":
             speech_output = "ok, let me eliminate a choice for you. "
-            (question, answer, answerPosition, questionKey, choices) = eliminate_choice(game, questionKey, choices)
-            speech_output += question
+            gameObject.reduce_choices()
+            speech_output += gameObject.spokenQuestion
 
-        elif gameData[game]["gameMode"] == "realAnswer":
+        elif gameObject.metadata["gameMode"] == "realAnswer":
             return get_hint_response()
     else:
         speech_output = "Sorry, you dont have any eliminates left. "
-        speech_output += "Again, the question is, " + question
+        speech_output += "Again, the question is, " + gameObject.spokenQuestion
 
-    reprompt_text = question
+    reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
                           build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
 
 def get_dont_know_response():
-    global gameData, game, question, answer, answerPosition
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Don't Know"
 
     if context == 'starting':
         return get_help_response()
 
-    if gameData[game]["gameMode"] == "answerChoice":
-        speech_output = "That is ok. The right answer was," + answerPosition + " ,which was," + answer + ". Better luck with the next question, "
-    elif gameData[game]["gameMode"] == "realAnswer":
-        speech_output = "That is ok. The right answer was," + answer + ". Better luck with the next question, "
-    (question, answer, answerPosition, questionKey, choices) = create_question(game)
-    speech_output += question
-    reprompt_text = question
+    if gameObject.metadata["gameMode"] == "answerChoice":
+        speech_output = "That is ok. The right answer was," + gameObject.position + " ,which was," + gameObject.answer + ". better luck with the next question, "
+    elif gameObject.metadata["gameMode"] == "realAnswer":
+        speech_output = "That is ok. The right answer was," + gameObject.answer + ". better luck with the next question, "
+    gameObject.create_qa()
+    speech_output += gameObject.spokenQuestion
+    reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
                           build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
 
 def get_repeat_response():
-    global game, question, answer, answerPosition
+    global gameObject
     session_attributes = {}
     card_title = "Quizzical Repeat"
-    speech_output = "ok, again. " + question
-    reprompt_text = question
+    speech_output = "ok, again. " + gameObject.spokenQuestion
+    reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
                           build_speechlet_response(card_title, speech_output, reprompt_text, should_end_session))
 
 
 def get_start_over_response():
-    global context, points, strikes
+    global gameObject, context
     session_attributes = {}
     card_title = "Quizzical Restart Game"
-    for key in gameData:
-        gameData[key]['usedQuestions'] = []
+
+    gameObject.metadata['usedQuestions'] = []
     context = 'starting'
-    points = 0
-    strikes = 0
+    gameObject.points = 0
+    gameObject.strikes = 0
     return get_welcome_response()
 
 
@@ -1152,7 +1113,7 @@ def handle_session_end_request():
 def game_over():
     session_attributes = {}
     card_title = "Quizzical Game Over"
-    speech_output = "You got " + str(points) + " points. "
+    speech_output = "You got " + str(gameObject.points) + " points. "
     speech_output += "Good effort, but you can only have " + str(strikesAllowed) + " strikes and you are out. "
     speech_output += "Thanks for playing Quizzical and hope to see you again soon"
     should_end_session = True
