@@ -5,11 +5,12 @@ Quizzical - An Alexa Skill
 Code is based on original code from https://github.com/pmckinney8/Alexa_Dojo_Skill.git
 """
 from __future__ import print_function
+
 import random
 
 ### ---------- START Game specific data ----------
 # Get our speech output variables defined here
-welcomeMessage = "Welcome to Quizzical. say which game would you like to play. continents, or, capitals. " \
+welcomeMessage = "Welcome. Let's get quizzical! What do you want to play. continents, or, capitals. " \
                  "Please look at the card, or say help, for additional game navigation choices. "
 welcomeCard = "Welcome to Quizzical\n" \
               "Choose from available categories: \n" \
@@ -26,14 +27,14 @@ welcomeCard = "Welcome to Quizzical\n" \
 rePromptWelcome = "Welcome to Quizzical, say the name of the game. "
 rePromptContinent = "Say the name of the continent"
 rePromptCapital = "Give me the number choice for the capital"
-rePromptGameSelection = "what is your selection. "
+rePromptGameSelection = "Just say the name of the game. For example, continents, or, capitals. if you need assistance, say, help "
 rePromptIDK = "what is your choice"
 rePrompt = "what is your choice"
 helpMessage = {
-    'starting': "Quizzical help. Simply say the name of the selection, continents or capitals. "
-                "Or if you want to start over simply say, start over. To end the game say, stop",
+    'starting': "Ok, I can help you. Simply say the name of the game you want to play, continents or capitals. "
+                "Or if you want to start over, say, start over. To end the game, say, stop",
 
-    'playing': "Quizzical help. You can say, "
+    'playing': "Ok, I can help you. You can say, "
                "repeat, to repeat a question, "
                "skip, to skip a question, "
                "hint, to get a hint, "
@@ -44,17 +45,17 @@ helpMessage = {
 }
 helpCard = {
     'starting': "Quizzical help:\n" \
-              "Choose from available categories: \n" \
-              "Geography or Sports\n" \
-              "Select a game from your chosen category after that.\n" \
-              "Available games are: \n" \
-              "Geography: Continents or Capitals\n" \
-              "Sports: Hockey, Baseball, Basketball or Football\n",
+                "Choose from available categories: \n" \
+                "Geography or Sports\n" \
+                "Select a game from your chosen category after that.\n" \
+                "Available games are: \n" \
+                "Geography: Continents or Capitals\n" \
+                "Sports: Hockey, Baseball, Basketball or Football\n",
 
     'playing': "Quizzical help:\n" \
                "You can say the answer or the following keywords to navigate\n" \
-              "Skip, Repeat, Hint, Eliminate, Start Over or End\n" \
-              "Answers can either be the choice number or a word depending on the game\n"
+               "Skip, Repeat, Hint, Eliminate, Start Over or End\n" \
+               "Answers can either be the choice number or a word depending on the game\n"
 }
 endOfCategoryMessage = "Congratulations!, you have reached the end of this category, " \
                        "say, start over, to choose a new one. "
@@ -630,7 +631,6 @@ strikesMessage = {
     2: 'You have a second strike!, better watch out! '
 }
 
-
 gameContext = ['starting', 'playing', 'ending']
 
 # Prompts that are used at random for correct answers
@@ -687,6 +687,8 @@ numToWord = {
     2: "three",
     3: "four"
 }
+
+
 ### ---------- END Variables used in the game ----------
 
 ### ---------- START Functions that control the game ----------
@@ -746,25 +748,25 @@ class Game():
             cardChoiceString = ""
             for i in range(0, len(self.choices) - 1):
                 spokenChoiceString += numToWord[i] + "," + self.choices[i] + '. '
-                cardChoiceString +=  str(i+1) + ". " + self.choices[i].title() + "\n"
+                cardChoiceString += str(i + 1) + ". " + self.choices[i].title() + "\n"
             spokenChoiceString += "and " + numToWord[len(self.choices) - 1] + "," + \
                                   self.choices[len(self.choices) - 1] + "."
-            cardChoiceString += str(len(self.choices)) + ". " + self.choices[len(self.choices) -1 ].title() + "\n"
+            cardChoiceString += str(len(self.choices)) + ". " + self.choices[len(self.choices) - 1].title() + "\n"
             speech_question = self.metadata['questionPrefix'] + self.question + self.metadata['questionSuffix']
             speech_choices = self.metadata['choicesPrefix'] + spokenChoiceString + self.metadata['choicesSuffix']
             self.spokenQuestion = self.speech_output = speech_question + speech_choices
             self.cardQuestion = "Question: " + self.metadata['questionPrefix'] + self.question.title() + \
-                                self.metadata['questionSuffix'] + "?\n"\
-                                "Answer choices:\n" + cardChoiceString + "\n"
+                                self.metadata['questionSuffix'] + "?\n" \
+                                                                  "Answer choices:\n" + cardChoiceString + "\n"
         elif self.metadata["gameMode"] == "realAnswer":
             speech_question = self.metadata['questionPrefix'] + self.question + self.metadata['questionSuffix']
             self.spokenQuestion = self.speech_output = speech_question
-            self.cardQuestion =  "Question: " + self.metadata['questionPrefix'] + self.question.title() + self.metadata['questionSuffix'] + "?\n"
+            self.cardQuestion = "Question: " + self.metadata['questionPrefix'] + self.question.title() + self.metadata[
+                'questionSuffix'] + "?\n"
 
     def create_qa(self):
         self.pick_qa()
         self.make_spoken_qa()
-
 
     def pick_hints(self):
         # pick two other keys that have the same answer and return them
@@ -794,8 +796,9 @@ class Game():
         # Reconstruct the spoken question
         self.make_spoken_qa()
 
+
 # Initialize a dummy game - this is useful for testing if the game selection has not been done by the user
-#gameObject = Game('continents')
+# gameObject = Game('continents')
 
 ### ---------- END Functions that control the game ----------
 
@@ -832,7 +835,6 @@ def on_session_started(session_started_request, session):
 
 
 def on_launch(launch_request, session):
-    global gameObject
     """ Called when the user launches the skill without specifying what they
     want
     """
@@ -840,6 +842,7 @@ def on_launch(launch_request, session):
 
 
 def on_intent(intent_request, session):
+    global gameObject, context
     """ Called when the user specifies an intent for this skill """
 
     print("on_intent requestId=" + intent_request['requestId'] +
@@ -848,29 +851,39 @@ def on_intent(intent_request, session):
     intent = intent_request['intent']
     intent_name = intent_request['intent']['name']
 
-    # Dispatch to your skill's intent handlers
-    if intent_name == "SelectGameIntent":
-        return get_select_game_response(intent_request)
-    elif intent_name == "AnswerIntent" or intent_name == "AnswerOnlyIntent":
-        return get_answer_response(intent_request)
-    elif intent_name == "SkipIntent":
-        return get_skip_response()
-    elif intent_name == "HintIntent":
-        return get_hint_response()
-    elif intent_name == "EliminateIntent":
-        return get_eliminate_response()
-    elif intent_name == 'RepeatIntent':
-        return get_repeat_response()
-    elif intent_name == "DontKnowIntent":
-        return get_dont_know_response()
-    elif intent_name == "AMAZON.StartOverIntent":
-        return get_start_over_response()
-    elif intent_name == "AMAZON.HelpIntent":
-        return get_help_response()
-    elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
-        return handle_session_end_request()
-    else:
-        raise ValueError("Invalid intent")
+    if context == 'playing':
+        if intent_name == "AnswerIntent" or intent_name == "AnswerOnlyIntent":
+            return get_answer_response(intent_request)
+        elif intent_name == "SkipIntent":
+            return get_skip_response()
+        elif intent_name == "HintIntent":
+            return get_hint_response()
+        elif intent_name == "EliminateIntent":
+            return get_eliminate_response()
+        elif intent_name == 'RepeatIntent':
+            return get_repeat_response()
+        elif intent_name == "DontKnowIntent":
+            return get_dont_know_response()
+        elif intent_name == "AMAZON.StartOverIntent":
+            return get_start_over_response()
+        elif intent_name == "AMAZON.HelpIntent":
+            return get_help_response()
+        elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
+            return handle_session_end_request()
+        else:
+            raise ValueError("Invalid intent")
+    elif context == 'starting':
+        # If the gameObject is not defined yet keep looking for SelectGameIntent
+        if intent_name == "SelectGameIntent":
+            return get_select_game_response(intent_request)
+        elif intent_name == "AMAZON.StartOverIntent":
+            return get_start_over_response()
+        elif intent_name == "AMAZON.HelpIntent":
+            return get_help_response()
+        elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
+            return handle_session_end_request()
+        else:
+            return get_select_game_response(intent_request)
 
 
 def on_session_ended(session_ended_request, session):
@@ -903,7 +916,7 @@ def get_welcome_response():
     should_end_session = False
     context = 'starting'  # we will use this context string to find context sensitive help
     return build_response(session_attributes, build_speechlet_response(
-        card_title, card_content,  speech_output, reprompt_text, should_end_session))
+        card_title, card_content, speech_output, reprompt_text, should_end_session))
 
 
 def get_help_response():
@@ -917,7 +930,8 @@ def get_help_response():
     reprompt_text = rePrompt
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_select_game_response(intent_request):
@@ -926,30 +940,38 @@ def get_select_game_response(intent_request):
     session_attributes = {}
     card_title = "Game Select"
     card_content = "Selecting the game to play\n"
-    selectedGame = intent_request["intent"]["slots"]["Game"]["value"]
+    try:
+        selectedGame = intent_request["intent"]["slots"]["Game"]["value"]
+        # Select the name of the "game" that we will use throughout the game
+        for key in gameSelections:
+            if selectedGame in gameSelections[key]['aliases']:
+                # TODO: rather than fixing this as city or team, make the next level selection of sub game choices
+                game = gameSelections[key]['choices']['city']
+                gameObject = Game(gameSelections[key]['choices']['city'])
 
-    # Select the name of the "game" that we will use throughout the game
-    for key in gameSelections:
-        if selectedGame in gameSelections[key]['aliases']:
-            # TODO: rather than fixing this as city or team, make the next level selection of sub game choices
-            game = gameSelections[key]['choices']['city']
-            gameObject = Game(gameSelections[key]['choices']['city'])
+        if game != "":
+            speech_output = "ok, " + selectedGame + "! let's begin!  "
+            gameObject.create_qa()
+            speech_output += gameObject.spokenQuestion
+            # Since this is the first time we are playing, we should give more detailed instructions
+            speech_output += gameObject.metadata["welcomeSuffix"]
+        else:
+            raise KeyError
 
-    if game != "":
-        speech_output = "ok, " + selectedGame + "! let's begin!  "
-        gameObject.create_qa()
-        speech_output += gameObject.spokenQuestion
-        # Since this is the first time we are playing, we should give more detailed instructions
-        speech_output += gameObject.metadata["welcomeSuffix"]
-    else:
+        card_content += "The selected game is " + game + ".\n"
+        context = 'playing'
+
+    except KeyError:
         speech_output = rePromptGameSelection
 
-    card_content += "The selected game is " + game + ".\n"
-    context = 'playing'
-    reprompt_text = rePromptGameSelection
+    if context == 'playing':
+        reprompt_text = rePrompt
+    elif context == 'starting':
+        reprompt_text = rePromptGameSelection
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_answer_response(intent_request):
@@ -1005,7 +1027,8 @@ def get_answer_response(intent_request):
     context = 'playing'
 
     return build_response(session_attributes,
-                          build_ssml_response(card_title, card_content,  speech_output, audiosrc, reprompt_text, should_end_session))
+                          build_ssml_response(card_title, card_content, speech_output, audiosrc, reprompt_text,
+                                              should_end_session))
 
 
 def get_skip_response():
@@ -1014,15 +1037,20 @@ def get_skip_response():
     card_title = "Skip"
 
     gameObject.skips += 1
+    skipsRemaining = skipsAllowed - gameObject.skips
+    if skipsRemaining == 0:
+        skipMessage = "skipping this, but remember, you don't have any more skips left after this. "
+    else:
+        skipMessage = "skipping. After this, you only have, " + str(skipsRemaining) + " ,skip available. "
     if gameObject.skips <= skipsAllowed:
         card_content = "Skipping " + gameObject.cardQuestion + "The right answer is " + gameObject.answer.title() + "."
         if gameObject.metadata["gameMode"] == "answerChoice":
-            speech_output = "Skipping this question. For future use, the right answer was," + \
-                            str(gameObject.position) + " ,which was," + gameObject.answer + \
-                            ". Moving on to the next question, "
+            speech_output = skipMessage + "Just to let you know, the right answer was," + \
+                            str(gameObject.position) + " ,which was," + gameObject.answer
+            speech_output += ". Moving to the next question, "
         elif gameObject.metadata["gameMode"] == "realAnswer":
-            speech_output = "Skipping this question. For future use, the right answer was," + \
-                            gameObject.answer + ". Moving on to the next question, "
+            speech_output = skipMessage + " Just to let you know, the right answer was," + \
+                            gameObject.answer + ". Moving to the next question, "
         gameObject.create_qa()
         speech_output += gameObject.spokenQuestion
     else:
@@ -1039,7 +1067,8 @@ def get_skip_response():
     reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_hint_response():
@@ -1055,13 +1084,19 @@ def get_hint_response():
             speech_output = "Sorry I don't have a hint to give you, but you can say, eliminate, to eliminate a choice. "
         elif gameObject.metadata["gameMode"] == "realAnswer":
             speech_output = "Ok, here is a hint. "
+            hintsRemaining = hintsAllowed - gameObject.hints
+            if hintsRemaining == 0:
+                speech_output += "remember, you don't have any more hints. "
+            else:
+                speech_output += " you only have " + str(hintsRemaining) + " hint available. "
             card_content += "Hint:"
             gameObject.pick_hints()
             for hint in range(0, len(gameObject.hintKeys) - 2):
                 speech_output += gameObject.hintKeys[hint] + ", "
                 card_content += gameObject.hintKeys[hint].title() + ", "
             speech_output += "and " + gameObject.hintKeys[len(gameObject.hintKeys) - 1] + ", "
-            card_content += "and " + gameObject.hintKeys[len(gameObject.hintKeys) - 1].title() + ".\nAll have the same answer."
+            card_content += "and " + gameObject.hintKeys[
+                len(gameObject.hintKeys) - 1].title() + ".\nAll have the same answer."
             speech_output += "all have the same answer. what is yours? "
     else:
         speech_output = "Sorry, you don't have any hints left. "
@@ -1071,7 +1106,8 @@ def get_hint_response():
     reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_eliminate_response():
@@ -1083,8 +1119,13 @@ def get_eliminate_response():
     gameObject.eliminates += 1
     if gameObject.eliminates <= eliminatesAllowed:
         if gameObject.metadata["gameMode"] == "answerChoice":
-            card_content +=  "Eliminating a choice\n"
+            card_content += "Eliminating a choice\n"
             speech_output = "ok, let me eliminate a choice for you. "
+            eliminatesRemaining = eliminatesAllowed - gameObject.eliminates
+            if eliminatesRemaining == 0:
+                speech_output += "remember, you don't have any more eliminates. "
+            else:
+                speech_output += " you only have " + str(eliminatesRemaining) + " eliminate available. "
             gameObject.reduce_choices()
             speech_output += gameObject.spokenQuestion
             card_content += gameObject.cardQuestion
@@ -1099,7 +1140,8 @@ def get_eliminate_response():
     reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_dont_know_response():
@@ -1120,7 +1162,8 @@ def get_dont_know_response():
     reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_repeat_response():
@@ -1132,18 +1175,19 @@ def get_repeat_response():
     reprompt_text = gameObject.spokenQuestion
     should_end_session = False
     return build_response(session_attributes,
-                          build_speechlet_response(card_title, card_content,  speech_output, reprompt_text, should_end_session))
+                          build_speechlet_response(card_title, card_content, speech_output, reprompt_text,
+                                                   should_end_session))
 
 
 def get_start_over_response():
     global gameObject, context
     session_attributes = {}
     card_title = "Restart Game"
-
-    gameObject.metadata['usedQuestions'] = []
     context = 'starting'
-    gameObject.points = 0
-    gameObject.strikes = 0
+    try:
+        del gameObject
+    except:
+        pass
     return get_welcome_response()
 
 
@@ -1154,7 +1198,7 @@ def handle_session_end_request():
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
     return build_response({}, build_speechlet_response(
-        card_title, card_content,  speech_output, None, should_end_session))
+        card_title, card_content, speech_output, None, should_end_session))
 
 
 def game_over():
@@ -1172,12 +1216,12 @@ def game_over():
     # return build_response({}, build_speechlet_response(
     #    card_title, card_content,  speech_output, None, should_end_session))
     return build_response(session_attributes,
-                          build_ssml_response(card_title, card_content,  speech_output, audiosrc, None, should_end_session))
+                          build_ssml_response(card_title, card_content, speech_output, audiosrc, None,
+                                              should_end_session))
 
 
 # --------------- Helpers that build all of the responses ----------------------
 def build_speechlet_response(title, content, output, reprompt_text, should_end_session):
-
     return {
         'outputSpeech': {
             'type': 'PlainText',
